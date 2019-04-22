@@ -2,15 +2,16 @@
   "broker_host" : "dg2r.fr",
   "broker_port" : 1883,
   "topics" : {
-    "device_api" : {
-      "publish" : {
-        "telemetry" : "v1/devices/me/telemetry",
-        "attributes" : "v1/devices/me/attributes",
-        "rpc_response" : "v1/devices/me/rpc/response/%s"
-      },
-      "subscribe" : {
-        "rpc_requests" : "v1/devices/me/rpc/request/+"
-      }
+    "publish" : {
+      "telemetry" : "v1/devices/me/telemetry",
+      "attributes" : "v1/devices/me/attributes",
+      "rpc_response" : "v1/devices/me/rpc/response/%s"
+    },
+    "subscribe" : {
+      "rpc_requests" : "v1/devices/me/rpc/request/+"
+    },
+    "regex" : {
+      "rpc_requests" : "v1\\/devices\\/me\\/rpc\\/request\\/(\\d*)$"
     }
   }
 }

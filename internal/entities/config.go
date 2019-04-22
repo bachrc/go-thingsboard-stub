@@ -9,16 +9,17 @@ type SupervisorConfig struct {
 	BrokerHost string `json:"broker_host"`
 	BrokerPort int    `json:"broker_port"`
 	Topics     struct {
-		DeviceAPI struct {
-			Publish struct {
-				Telemetry   string `json:"telemetry"`
-				Attributes  string `json:"attributes"`
-				RPCResponse string `json:"rpc_response"`
-			} `json:"publish"`
-			Subscribe struct {
-				RPCRequests string `json:"rpc_requests"`
-			} `json:"subscribe"`
-		} `json:"device_api"`
+		Publish struct {
+			Telemetry   string `json:"telemetry"`
+			Attributes  string `json:"attributes"`
+			RPCResponse string `json:"rpc_response"`
+		} `json:"publish"`
+		Subscribe struct {
+			RPCRequests string `json:"rpc_requests"`
+		} `json:"subscribe"`
+		Regex struct {
+			RPCRequests string `json:"rpc_requests"`
+		} `json:"regex"`
 	} `json:"topics"`
 }
 

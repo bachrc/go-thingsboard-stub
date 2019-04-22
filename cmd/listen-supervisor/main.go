@@ -23,9 +23,9 @@ func main() {
 
 	log.Printf("Bonjouuuur, voici le broker : %s", config.BrokerHost)
 
-	worker := internal.InitWorker("v4b77JcaXdctUJtOTWoF")
+	worker := internal.InitWorker("v4b77JcaXdctUJtOTWoF", "valueSwitch1")
 
-	worker.Work()
+	go worker.Work()
 
 	<-c
 }

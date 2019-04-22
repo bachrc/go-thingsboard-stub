@@ -1,10 +1,23 @@
 package entities
 
 type GetValue struct {
-	EntityID string `json:"entityId"`
-	OneWay   bool   `json:"oneWay"`
-	Method   string `json:"method"`
-	Params   struct {
-		Value bool `json:"value"`
-	} `json:"params"`
+	Method string `json:"method"`
+	Params Params `json:"params"`
+}
+type Params struct {
+	Value bool `json:"value"`
+}
+
+type Instruction struct {
+	Method string `json:"method"`
+}
+
+type SetValue struct {
+	Method string `json:"method"`
+	Params bool   `json:"params"`
+}
+
+type CheckStatus struct {
+	Method string `json:"method"`
+	Params bool   `json:"params"`
 }
