@@ -1,5 +1,5 @@
 {
-  "broker_host" : "tcp://dg2r.fr",
+  "broker_host" : "dg2r.fr",
   "broker_port" : 1883,
   "topics" : {
     "device_api" : {

@@ -2,11 +2,18 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"os/signal"
+	"syscall"
+	"tests-econtrols-supervisor/internal"
 	"tests-econtrols-supervisor/internal/entities"
 )
 
 func main() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
 	config, err := entities.GetConfig()
 
 	if err != nil {
@@ -14,5 +21,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Bonjouuuur, voici le broker : %s", config.BrokerHost)
+	log.Printf("Bonjouuuur, voici le broker : %s", config.BrokerHost)
+
+	worker := internal.InitWorker("v4b77JcaXdctUJtOTWoF")
+
+	worker.Work()
+
+	<-c
 }
