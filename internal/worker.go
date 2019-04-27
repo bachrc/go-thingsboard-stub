@@ -14,10 +14,12 @@ var mqttAddressTemplate = "tcp://%s:%d"
 var config, _ = entities.GetConfig()
 
 type Worker struct {
-	username      string
-	attributeKey  string
-	client        mqtt.Client
-	booleanSwitch bool
+	username       string
+	attributeKey   string
+	client         mqtt.Client
+	booleanSwitch  bool
+	temperature    string
+	temperatureKey string
 }
 
 func (w *Worker) Work() {
@@ -27,12 +29,15 @@ func (w *Worker) Work() {
 	log.Println("Running...")
 	for range time.Tick(5 * time.Second) {
 		w.sendValue()
+		w.sendTemperature()
 	}
 }
 
-func (w *Worker) init(username string, attributeKey string) {
+func (w *Worker) init(username string, attributeKey string, temperatureKey string) {
 	w.username = username
 	w.attributeKey = attributeKey
+	w.temperatureKey = temperatureKey
+	w.temperature = "3.15"
 	opts := mqtt.NewClientOptions().AddBroker(fmt.Sprintf(mqttAddressTemplate, config.BrokerHost, config.BrokerPort)).SetUsername(username)
 	opts.OnConnect = w.onConnect
 
@@ -61,25 +66,16 @@ func (w *Worker) onMessage(client mqtt.Client, msg mqtt.Message) {
 	case "setValue":
 		w.setValueHandler(client, requestId, msg.Payload())
 		break
+	case "getTemperature":
+		w.getTemperatureHandler(client, requestId, msg.Payload())
+		break
+	case "setTemperature":
+		w.setTemperatureHandler(client, requestId, msg.Payload())
+		break
 	case "checkStatus":
 		w.checkStatusHandler(client, requestId, msg.Payload())
 		break
 	}
-}
-
-func (w *Worker) AnswerToGetValue(client mqtt.Client, topic string, operation string) {
-	requestId := w.getRequestId(topic)
-
-	response := entities.SetValue{
-		Method: operation,
-		Params: true,
-	}
-
-	message, _ := json.Marshal(response)
-
-	log.Printf("And you answer this object : %s", message)
-
-	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, message)
 }
 
 func (w *Worker) getRequestId(topic string) string {
@@ -93,21 +89,21 @@ func (w *Worker) getRequestId(topic string) string {
 }
 
 func (w *Worker) getValueHandler(client mqtt.Client, requestId string, message []byte) {
-	var received entities.GetValue
-	_ = json.Unmarshal(message, &received)
+	payload := make(map[string]bool)
+	payload[w.attributeKey] = w.booleanSwitch
 
 	response := entities.GetValue{
 		Method: "getValue",
 		Params: entities.Params{
-			Value: w.booleanSwitch,
+			Value: false,
 		},
 	}
 
 	messageToSend, _ := json.Marshal(response)
 
-	log.Printf("And you answer this object : %s", messageToSend)
+	log.Printf("And you answer this object : %s to request %s", messageToSend, requestId)
 
-	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
+	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, message)
 }
 
 func (w *Worker) setValueHandler(client mqtt.Client, requestId string, message []byte) {
@@ -141,6 +137,31 @@ func (w *Worker) checkStatusHandler(client mqtt.Client, requestId string, payloa
 	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
 }
 
+func (w *Worker) getTemperatureHandler(client mqtt.Client, requestId string, message []byte) {
+	log.Print("Got getTemperature ")
+	log.Printf("And you answer this object : %s", w.temperature)
+
+	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, w.temperature)
+}
+
+func (w *Worker) setTemperatureHandler(client mqtt.Client, requestId string, message []byte) {
+	var received entities.SetTemperature
+	_ = json.Unmarshal(message, &received)
+
+	w.temperature = received.Params
+
+	response := entities.SetTemperature{
+		Method: "setTemperature",
+		Params: w.temperature,
+	}
+
+	messageToSend, _ := json.Marshal(response)
+
+	log.Printf("And you answer this object : %s", messageToSend)
+
+	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
+}
+
 func (w *Worker) sendValue() {
 	payload := make(map[string]bool)
 
@@ -152,9 +173,20 @@ func (w *Worker) sendValue() {
 	w.client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
 }
 
-func InitWorker(username string, attributeKey string) *Worker {
+func (w *Worker) sendTemperature() {
+	payload := make(map[string]string)
+
+	payload[w.temperatureKey] = w.temperature
+	log.Printf("Message sent : %+v", payload)
+
+	messageToSend, _ := json.Marshal(payload)
+
+	w.client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
+}
+
+func InitWorker(username string, attributeKey string, temperatureKey string) *Worker {
 	worker := new(Worker)
-	worker.init(username, attributeKey)
+	worker.init(username, attributeKey, temperatureKey)
 
 	return worker
 }

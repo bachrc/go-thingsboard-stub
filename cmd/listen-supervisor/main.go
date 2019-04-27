@@ -23,7 +23,7 @@ func main() {
 
 	log.Printf("Bonjouuuur, voici le broker : %s", config.BrokerHost)
 
-	worker := internal.InitWorker("v4b77JcaXdctUJtOTWoF", "valueSwitch1")
+	worker := internal.InitWorker("v4b77JcaXdctUJtOTWoF", "valueSwitch1", "temperature1")
 
 	go worker.Work()
 
