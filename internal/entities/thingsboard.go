@@ -1,11 +1,11 @@
 package entities
 
-type GetValue struct {
+type GetSwitchValue struct {
 	Method string `json:"method"`
 	Params Params `json:"params"`
 }
 
-type GetTemperature struct {
+type GetTemperatureValue struct {
 	Method string            `json:"method"`
 	Params ParamsTemperature `json:"params"`
 }
@@ -15,14 +15,14 @@ type Params struct {
 }
 
 type ParamsTemperature struct {
-	Value float64 `json:"value"`
+	Value string `json:"value"`
 }
 
 type Instruction struct {
 	Method string `json:"method"`
 }
 
-type SetValue struct {
+type SetSwitchValue struct {
 	Method string `json:"method"`
 	Params bool   `json:"params"`
 }

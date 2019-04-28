@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"tests-econtrols-supervisor/internal"
 	"tests-econtrols-supervisor/internal/entities"
+	"tests-econtrols-supervisor/internal/workers"
 )
 
 func main() {
@@ -23,7 +24,21 @@ func main() {
 
 	log.Printf("Bonjouuuur, voici le broker : %s", config.BrokerHost)
 
-	worker := internal.InitWorker("v4b77JcaXdctUJtOTWoF", "valueSwitch1", "temperature1")
+	switches := []workers.Switch{{
+		AttributeName:  "valueSwitch1",
+		Value:          true,
+		GetValueMethod: "getSwitch1Value",
+		SetValueMethod: "setSwitch1Value",
+	}}
+
+	temperatures := []workers.Temperature{{
+		AttributeName:  "temperature1",
+		Value:          "20.0",
+		GetValueMethod: "getTemperature1",
+		SetValueMethod: "setTemperature1",
+	}}
+
+	worker := internal.InitWorker("v4b77JcaXdctUJtOTWoF", switches, temperatures)
 
 	go worker.Work()
 
