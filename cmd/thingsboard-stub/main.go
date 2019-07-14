@@ -56,6 +56,15 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+
+		if address == "" {
+			panic("Please provide the address of the Thingsboard instance")
+		}
+
+		if token == "" {
+			panic("Please provide the Thingsboard Acces Token of the device to stub")
+		}
+
 		industruino := createDevice(address, port, token, switches, temperatures)
 		industruino.Work()
 
