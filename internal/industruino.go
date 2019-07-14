@@ -1,10 +1,10 @@
 package internal
 
 import (
-	"./entities"
-	"./workers"
 	"encoding/json"
 	"fmt"
+	"github.com/bachrc/thingsboard-stub/internal/entities"
+	"github.com/bachrc/thingsboard-stub/internal/workers"
 	"github.com/eclipse/paho.mqtt.golang"
 	"log"
 	"regexp"

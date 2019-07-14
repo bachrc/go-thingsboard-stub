@@ -1,8 +1,8 @@
 package main
 
 import (
-	"../../internal"
-	"../../internal/utils"
+	"github.com/bachrc/thingsboard-stub/internal"
+	"github.com/bachrc/thingsboard-stub/internal/utils"
 	"github.com/urfave/cli"
 	"log"
 	"os"

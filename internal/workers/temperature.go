@@ -1,9 +1,9 @@
 package workers
 
 import (
-	"../entities"
 	"encoding/json"
 	"fmt"
+	"github.com/bachrc/thingsboard-stub/internal/entities"
 	"github.com/eclipse/paho.mqtt.golang"
 	"log"
 	"time"

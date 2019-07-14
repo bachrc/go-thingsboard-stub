@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"../workers"
 	"encoding/json"
+	"github.com/bachrc/thingsboard-stub/internal/workers"
 	"io/ioutil"
 )
 
