@@ -1,17 +1,17 @@
 package workers
 
 import (
+	"../entities"
 	"encoding/json"
 	"fmt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"log"
-	"tests-econtrols-supervisor/internal/entities"
 	"time"
 )
 
 type Temperature struct {
 	Value          string
-	Client         mqtt.Client
+	Client         *mqtt.Client
 	AttributeName  string
 	GetValueMethod string
 	SetValueMethod string
@@ -30,7 +30,8 @@ func (t *Temperature) answerGetValue(requestId string) {
 
 	messageToSend, _ := json.Marshal(response)
 
-	t.Client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
+	client := *t.Client
+	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
 }
 
 func (t *Temperature) answerSetValue(message []byte, requestId string) {
@@ -45,7 +46,8 @@ func (t *Temperature) answerSetValue(message []byte, requestId string) {
 
 	messageToSend, _ := json.Marshal(response)
 
-	t.Client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
+	client := *t.Client
+	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
 }
 
 func (t *Temperature) sendValue() {
@@ -56,7 +58,8 @@ func (t *Temperature) sendValue() {
 
 	messageToSend, _ := json.Marshal(payload)
 
-	t.Client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
+	client := *t.Client
+	client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
 }
 
 func (t *Temperature) Work() {

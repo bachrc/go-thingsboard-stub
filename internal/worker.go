@@ -1,13 +1,13 @@
 package internal
 
 import (
+	"./entities"
+	"./workers"
 	"encoding/json"
 	"fmt"
 	"github.com/eclipse/paho.mqtt.golang"
 	"log"
 	"regexp"
-	"tests-econtrols-supervisor/internal/entities"
-	"tests-econtrols-supervisor/internal/workers"
 )
 
 var mqttAddressTemplate = "tcp://%s:%d"
@@ -15,22 +15,23 @@ var config, _ = entities.GetConfig()
 
 type Industruino struct {
 	username     string
-	client       mqtt.Client
+	client       *mqtt.Client
 	switches     []workers.Switch
 	temperatures []workers.Temperature
 }
 
 func (w *Industruino) Work() {
-	defer w.client.Disconnect(1)
+	client := *w.client
+	defer client.Disconnect(1)
 
-	w.client.Connect()
+	client.Connect()
 	log.Println("Running...")
 	for _, theSwitch := range w.switches {
-		go theSwitch.Work()
+		theSwitch.Work()
 	}
 
 	for _, theTemperature := range w.temperatures {
-		go theTemperature.Work()
+		theTemperature.Work()
 	}
 }
 
@@ -41,13 +42,17 @@ func (w *Industruino) init(username string, switches []workers.Switch, temperatu
 	opts := mqtt.NewClientOptions().AddBroker(fmt.Sprintf(mqttAddressTemplate, config.BrokerHost, config.BrokerPort)).SetUsername(username)
 	opts.OnConnect = w.onConnect
 
-	w.client = mqtt.NewClient(opts)
+	client := mqtt.NewClient(opts)
+	w.client = &client
+
+	//clientTest := *w.client
+	//clientTest.Connect()
 
 	for _, theSwitch := range w.switches {
-		theSwitch.Client = w.client
+		theSwitch.Client = &client
 	}
 	for _, theTemperature := range w.temperatures {
-		theTemperature.Client = w.client
+		theTemperature.Client = &client
 	}
 }
 
@@ -69,7 +74,7 @@ func (w *Industruino) onMessage(client mqtt.Client, msg mqtt.Message) {
 	requestId := w.getRequestId(msg.Topic())
 
 	if received.Method == "checkStatus" {
-		w.checkStatusHandler(client, requestId, payload)
+		w.checkStatusHandler(requestId, payload)
 	}
 
 	for _, theSwitch := range w.switches {
@@ -92,7 +97,8 @@ func (w *Industruino) getRequestId(topic string) string {
 	return matches[1]
 }
 
-func (w *Industruino) checkStatusHandler(client mqtt.Client, requestId string, payload []byte) {
+func (w *Industruino) checkStatusHandler(requestId string, payload []byte) {
+	client := *w.client
 	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, payload)
 }
 

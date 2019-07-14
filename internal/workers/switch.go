@@ -1,11 +1,11 @@
 package workers
 
 import (
+	"../entities"
 	"encoding/json"
 	"fmt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"log"
-	"tests-econtrols-supervisor/internal/entities"
 	"time"
 )
 
@@ -13,7 +13,7 @@ var config, _ = entities.GetConfig()
 
 type Switch struct {
 	Value          bool
-	Client         mqtt.Client
+	Client         *mqtt.Client
 	AttributeName  string
 	GetValueMethod string
 	SetValueMethod string
@@ -31,8 +31,8 @@ func (s *Switch) answerGetValue(requestId string) {
 	}
 
 	messageToSend, _ := json.Marshal(response)
-
-	s.Client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
+	client := *s.Client
+	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
 }
 
 func (s *Switch) answerSetValue(message []byte, requestId string) {
@@ -46,8 +46,8 @@ func (s *Switch) answerSetValue(message []byte, requestId string) {
 	}
 
 	messageToSend, _ := json.Marshal(response)
-
-	s.Client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
+	client := *s.Client
+	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
 }
 
 func (s *Switch) sendValue() {
@@ -57,12 +57,12 @@ func (s *Switch) sendValue() {
 	log.Printf("Message sent : %+v", payload)
 
 	messageToSend, _ := json.Marshal(payload)
-
-	s.Client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
+	client := *s.Client
+	client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
 }
 
 func (s *Switch) Work() {
-	for range time.Tick(5 * time.Second) {
+	for range time.Tick(2 * time.Second) {
 		s.sendValue()
 	}
 }

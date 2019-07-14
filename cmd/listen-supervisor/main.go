@@ -1,14 +1,15 @@
 package main
 
 import (
+	"../../internal"
+	"../../internal/entities"
+	"../../internal/workers"
 	"fmt"
+	"github.com/urfave/cli"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"tests-econtrols-supervisor/internal"
-	"tests-econtrols-supervisor/internal/entities"
-	"tests-econtrols-supervisor/internal/workers"
 )
 
 func main() {
@@ -43,4 +44,67 @@ func main() {
 	go worker.Work()
 
 	<-c
+}
+
+func altmain() {
+	app := cli.NewApp()
+
+	app.Flags = []cli.Flag{
+		cli.IntFlag{
+			Name:  "gap",
+			Value: 5,
+			Usage: "Seconds gap between sending two values",
+		},
+		cli.StringFlag{
+			Name:  "config, c",
+			Usage: "Load configuration from `FILE`",
+		},
+	}
+
+	app.Commands = []cli.Command{
+		{
+			Name:  "start-temperature",
+			Usage: "starts a temperature stub",
+			Action: func(c *cli.Context) error {
+				fmt.Println("added  ", c.Args().First())
+				return nil
+			},
+		},
+		{
+			Name:  "switch",
+			Usage: "starts a switch stub",
+			Action: func(c *cli.Context) error {
+				fmt.Println("completed task: ", c.Args().First())
+				return nil
+			},
+		},
+		{
+			Name:    "template",
+			Aliases: []string{"t"},
+			Usage:   "options for task templates",
+			Subcommands: []cli.Command{
+				{
+					Name:  "add",
+					Usage: "add a new template",
+					Action: func(c *cli.Context) error {
+						fmt.Println("new task template: ", c.Args().First())
+						return nil
+					},
+				},
+				{
+					Name:  "remove",
+					Usage: "remove an existing template",
+					Action: func(c *cli.Context) error {
+						fmt.Println("removed task template: ", c.Args().First())
+						return nil
+					},
+				},
+			},
+		},
+	}
+
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
