@@ -7,15 +7,29 @@ For now you can simulate two types of devices :
 - A boolean type : like the state of the switch
 - A float type : for temperatures for example.
 
+### Installation
+
+In order to install the stub, your just need to have Go installed. And do :
+
+```
+go get github.com/bachrc/thingsboard-stub/cmd/thingsboard-stub
+```
+
+Then if your $PATH is well configured containing $GOPATH/bin, the following command should show you the usage :
+
+```
+thingsboard-stub --help
+``` 
+
 ### Usage
 
 ```
-J:\dev\tests-econtrols-supervisor>main.exe --help
+λ thingsboard-stub --help
 NAME:
-   ecstub - Stub for the eControls Supervisor run by Thingsboard
+   thingsboard-stub - Stub for Thingsboard
 
 USAGE:
-   main.exe [global options] command [command options] [arguments...]
+   thingsboard-stub [global options] command [command options] [arguments...]
 
 VERSION:
    0.0.0

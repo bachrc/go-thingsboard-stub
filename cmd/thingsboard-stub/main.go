@@ -19,8 +19,8 @@ func main() {
 
 	app := cli.NewApp()
 
-	app.Name = "ecstub"
-	app.Usage = "Stub for the eControls Supervisor run by Thingsboard"
+	app.Name = "thingsboard-stub"
+	app.Usage = "Stub for Thingsboard"
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
