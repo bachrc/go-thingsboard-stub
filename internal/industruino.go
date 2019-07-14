@@ -20,24 +20,6 @@ type Industruino struct {
 	temperatures []*workers.Temperature
 }
 
-func (w *Industruino) Work() {
-	client := *w.client
-	defer client.Disconnect(1)
-
-	client.Connect()
-	log.Println("Running...")
-
-	for _, theSwitch := range w.switches {
-		ahkeSwitch := *theSwitch
-		go ahkeSwitch.Work()
-	}
-
-	for _, theTemperature := range w.temperatures {
-		temp := theTemperature
-		go temp.Work()
-	}
-}
-
 func (w *Industruino) init(gap int, address string, port int, token string, switchesRef []*workers.Switch, temperaturesRef []*workers.Temperature) {
 	w.username = token
 	w.switches = switchesRef
@@ -53,6 +35,22 @@ func (w *Industruino) init(gap int, address string, port int, token string, swit
 	}
 	for _, theTemperature := range temperaturesRef {
 		theTemperature.Client = &client
+	}
+}
+
+func (w *Industruino) Work() {
+	client := *w.client
+	defer client.Disconnect(1)
+
+	client.Connect()
+	log.Println("Running...")
+
+	for _, theSwitch := range w.switches {
+		go (*theSwitch).Work()
+	}
+
+	for _, theTemperature := range w.temperatures {
+		go (*theTemperature).Work()
 	}
 }
 

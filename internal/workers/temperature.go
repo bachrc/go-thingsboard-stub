@@ -4,7 +4,7 @@ import (
 	"../entities"
 	"encoding/json"
 	"fmt"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/eclipse/paho.mqtt.golang"
 	"log"
 	"time"
 )
