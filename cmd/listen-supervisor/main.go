@@ -25,14 +25,14 @@ func main() {
 
 	log.Printf("Bonjouuuur, voici le broker : %s", config.BrokerHost)
 
-	switches := []workers.Switch{{
+	switches := []*workers.Switch{{
 		AttributeName:  "valueSwitch1",
 		Value:          true,
 		GetValueMethod: "getSwitch1Value",
 		SetValueMethod: "setSwitch1Value",
 	}}
 
-	temperatures := []workers.Temperature{{
+	temperatures := []*workers.Temperature{{
 		AttributeName:  "temperature1",
 		Value:          "20.0",
 		GetValueMethod: "getTemperature1",

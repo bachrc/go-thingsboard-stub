@@ -16,8 +16,8 @@ var config, _ = entities.GetConfig()
 type Industruino struct {
 	username     string
 	client       *mqtt.Client
-	switches     []workers.Switch
-	temperatures []workers.Temperature
+	switches     []*workers.Switch
+	temperatures []*workers.Temperature
 }
 
 func (w *Industruino) Work() {
@@ -26,32 +26,32 @@ func (w *Industruino) Work() {
 
 	client.Connect()
 	log.Println("Running...")
+
 	for _, theSwitch := range w.switches {
-		theSwitch.Work()
+		ahkeSwitch := *theSwitch
+		ahkeSwitch.Work()
 	}
 
 	for _, theTemperature := range w.temperatures {
-		theTemperature.Work()
+		temp := theTemperature
+		temp.Work()
 	}
 }
 
-func (w *Industruino) init(username string, switches []workers.Switch, temperatures []workers.Temperature) {
+func (w *Industruino) init(username string, switchesRef []*workers.Switch, temperaturesRef []*workers.Temperature) {
 	w.username = username
-	w.switches = switches
-	w.temperatures = temperatures
+	w.switches = switchesRef
+	w.temperatures = temperaturesRef
 	opts := mqtt.NewClientOptions().AddBroker(fmt.Sprintf(mqttAddressTemplate, config.BrokerHost, config.BrokerPort)).SetUsername(username)
 	opts.OnConnect = w.onConnect
 
 	client := mqtt.NewClient(opts)
 	w.client = &client
 
-	//clientTest := *w.client
-	//clientTest.Connect()
-
-	for _, theSwitch := range w.switches {
+	for _, theSwitch := range switchesRef {
 		theSwitch.Client = &client
 	}
-	for _, theTemperature := range w.temperatures {
+	for _, theTemperature := range temperaturesRef {
 		theTemperature.Client = &client
 	}
 }
@@ -78,11 +78,11 @@ func (w *Industruino) onMessage(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	for _, theSwitch := range w.switches {
-		theSwitch.HandleMessage(received.Method, requestId, payload)
+		(*theSwitch).HandleMessage(received.Method, requestId, payload)
 	}
 
 	for _, theTemperature := range w.temperatures {
-		theTemperature.HandleMessage(received.Method, requestId, payload)
+		(*theTemperature).HandleMessage(received.Method, requestId, payload)
 	}
 
 }
@@ -102,7 +102,7 @@ func (w *Industruino) checkStatusHandler(requestId string, payload []byte) {
 	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, payload)
 }
 
-func InitWorker(username string, switches []workers.Switch, temperatures []workers.Temperature) *Industruino {
+func InitWorker(username string, switches []*workers.Switch, temperatures []*workers.Temperature) *Industruino {
 	worker := new(Industruino)
 	worker.init(username, switches, temperatures)
 

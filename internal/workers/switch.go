@@ -46,6 +46,7 @@ func (s *Switch) answerSetValue(message []byte, requestId string) {
 	}
 
 	messageToSend, _ := json.Marshal(response)
+
 	client := *s.Client
 	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
 }
