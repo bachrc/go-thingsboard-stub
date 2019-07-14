@@ -13,14 +13,14 @@ import (
 var mqttAddressTemplate = "tcp://%s:%d"
 var config, _ = entities.GetConfig()
 
-type Industruino struct {
+type Device struct {
 	username     string
 	client       *mqtt.Client
 	switches     []*workers.Switch
 	temperatures []*workers.Temperature
 }
 
-func (w *Industruino) init(gap int, address string, port int, token string, switchesRef []*workers.Switch, temperaturesRef []*workers.Temperature) {
+func (w *Device) init(gap int, address string, port int, token string, switchesRef []*workers.Switch, temperaturesRef []*workers.Temperature) {
 	w.username = token
 	w.switches = switchesRef
 	w.temperatures = temperaturesRef
@@ -38,7 +38,7 @@ func (w *Industruino) init(gap int, address string, port int, token string, swit
 	}
 }
 
-func (w *Industruino) Work() {
+func (w *Device) Work() {
 	client := *w.client
 	defer client.Disconnect(1)
 
@@ -54,14 +54,14 @@ func (w *Industruino) Work() {
 	}
 }
 
-func (w *Industruino) onConnect(c mqtt.Client) {
-	log.Print("I did connected well !")
+func (w *Device) onConnect(c mqtt.Client) {
+	log.Println("I did connected well !")
 	if token := c.Subscribe(config.Topics.Subscribe.RPCRequests, 2, w.onMessage); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
 }
 
-func (w *Industruino) onMessage(client mqtt.Client, msg mqtt.Message) {
+func (w *Device) onMessage(client mqtt.Client, msg mqtt.Message) {
 	payload := msg.Payload()
 	log.Printf("Received message from topic : %s", msg.Topic())
 	log.Printf("The message is : \n%s", payload)
@@ -85,7 +85,7 @@ func (w *Industruino) onMessage(client mqtt.Client, msg mqtt.Message) {
 
 }
 
-func (w *Industruino) getRequestId(topic string) string {
+func (w *Device) getRequestId(topic string) string {
 	r := regexp.MustCompile(config.Topics.Regex.RPCRequests)
 	matches := r.FindStringSubmatch(topic)
 	if len(matches) != 2 {
@@ -95,13 +95,13 @@ func (w *Industruino) getRequestId(topic string) string {
 	return matches[1]
 }
 
-func (w *Industruino) checkStatusHandler(requestId string, payload []byte) {
+func (w *Device) checkStatusHandler(requestId string, payload []byte) {
 	client := *w.client
 	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, payload)
 }
 
-func InitWorker(gap int, address string, port int, token string, switches []*workers.Switch, temperatures []*workers.Temperature) *Industruino {
-	worker := new(Industruino)
+func InitWorker(gap int, address string, port int, token string, switches []*workers.Switch, temperatures []*workers.Temperature) *Device {
+	worker := new(Device)
 	worker.init(gap, address, port, token, switches, temperatures)
 
 	return worker

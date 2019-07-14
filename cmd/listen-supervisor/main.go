@@ -77,7 +77,7 @@ func main() {
 	}
 }
 
-func startApplication(gap int, address string, port int, token string, switchesDefPath string, temperaturesDefPath string) *internal.Industruino {
+func startApplication(gap int, address string, port int, token string, switchesDefPath string, temperaturesDefPath string) *internal.Device {
 	switches, _ := utils.ParseSwitchesDefinition(switchesDefPath)
 	temperatures, _ := utils.ParseTemperaturesDefinition(temperaturesDefPath)
 
