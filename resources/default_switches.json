@@ -1,6 +1,14 @@
-[{
-  "attributeName" : "ampoulesalon",
-  "value": true,
-  "getValueMethod": "getAmpouleSalonValue",
-  "setValueMethod": "setAmpouleSalonValue"
-}]
+[
+  {
+    "attributeName": "ampoulesalon",
+    "value": true,
+    "getValueMethod": "getAmpouleSalonValue",
+    "setValueMethod": "setAmpouleSalonValue"
+  },
+  {
+    "attributeName": "ampoulebureau",
+    "value": false,
+    "getValueMethod": "getAmpouleBureauValue",
+    "setValueMethod": "setAmpouleBureauValue"
+  }
+]

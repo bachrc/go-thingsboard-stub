@@ -6,6 +6,8 @@ import (
 	"github.com/urfave/cli"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 //func main() {
@@ -93,8 +95,12 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) error {
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 		industruino := startApplication(gap, address, port, token, switches, temperatures)
 		industruino.Work()
+
+		<-ch
 
 		return nil
 	}

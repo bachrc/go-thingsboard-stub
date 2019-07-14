@@ -29,12 +29,12 @@ func (w *Industruino) Work() {
 
 	for _, theSwitch := range w.switches {
 		ahkeSwitch := *theSwitch
-		ahkeSwitch.Work()
+		go ahkeSwitch.Work()
 	}
 
 	for _, theTemperature := range w.temperatures {
 		temp := theTemperature
-		temp.Work()
+		go temp.Work()
 	}
 }
 
