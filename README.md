@@ -7,6 +7,20 @@ For now you can simulate two types of devices :
 - A boolean type : like the state of the switch
 - A float type : for temperatures for example.
 
+### Installation
+
+In order to install the stub, your just need to have Go installed. And do :
+
+```
+go get github.com/bachrc/thingsboard-stub/cmd/thingsboard-stub
+```
+
+Then if your $PATH is well configured containing $GOPATH/bin, the following command should show you the usage :
+
+```
+thingsboard-stub --help
+``` 
+
 ### Usage
 
 ```
