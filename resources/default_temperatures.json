@@ -1,0 +1,6 @@
+[{
+  "attributeName" : "temperaturebureau",
+  "value": "20.0",
+  "getValueMethod": "getTemperatureBureauValue",
+  "setValueMethod": "setTemperatureBureauValue"
+}]

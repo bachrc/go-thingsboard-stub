@@ -1,6 +1,4 @@
 {
-  "broker_host" : "dg2r.fr",
-  "broker_port" : 1883,
   "topics" : {
     "publish" : {
       "telemetry" : "v1/devices/me/telemetry",

@@ -38,11 +38,11 @@ func (w *Industruino) Work() {
 	}
 }
 
-func (w *Industruino) init(username string, switchesRef []*workers.Switch, temperaturesRef []*workers.Temperature) {
-	w.username = username
+func (w *Industruino) init(gap int, address string, port int, token string, switchesRef []*workers.Switch, temperaturesRef []*workers.Temperature) {
+	w.username = token
 	w.switches = switchesRef
 	w.temperatures = temperaturesRef
-	opts := mqtt.NewClientOptions().AddBroker(fmt.Sprintf(mqttAddressTemplate, config.BrokerHost, config.BrokerPort)).SetUsername(username)
+	opts := mqtt.NewClientOptions().AddBroker(fmt.Sprintf(mqttAddressTemplate, address, port)).SetUsername(token)
 	opts.OnConnect = w.onConnect
 
 	client := mqtt.NewClient(opts)
@@ -102,9 +102,9 @@ func (w *Industruino) checkStatusHandler(requestId string, payload []byte) {
 	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, payload)
 }
 
-func InitWorker(username string, switches []*workers.Switch, temperatures []*workers.Temperature) *Industruino {
+func InitWorker(gap int, address string, port int, token string, switches []*workers.Switch, temperatures []*workers.Temperature) *Industruino {
 	worker := new(Industruino)
-	worker.init(username, switches, temperatures)
+	worker.init(gap, address, port, token, switches, temperatures)
 
 	return worker
 }

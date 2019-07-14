@@ -4,7 +4,7 @@ import (
 	"../entities"
 	"encoding/json"
 	"fmt"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/eclipse/paho.mqtt.golang"
 	"log"
 	"time"
 )
@@ -12,11 +12,11 @@ import (
 var config, _ = entities.GetConfig()
 
 type Switch struct {
-	Value          bool
+	Value          bool `json:"value"`
 	Client         *mqtt.Client
-	AttributeName  string
-	GetValueMethod string
-	SetValueMethod string
+	AttributeName  string `json:"attributeName"`
+	GetValueMethod string `json:"getValueMethod"`
+	SetValueMethod string `json:"setValueMethod"`
 }
 
 func (s *Switch) answerGetValue(requestId string) {

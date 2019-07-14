@@ -1,0 +1,6 @@
+[{
+  "attributeName" : "ampoulesalon",
+  "value": true,
+  "getValueMethod": "getAmpouleSalonValue",
+  "setValueMethod": "setAmpouleSalonValue"
+}]

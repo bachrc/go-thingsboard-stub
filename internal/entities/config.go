@@ -6,9 +6,7 @@ import (
 )
 
 type SupervisorConfig struct {
-	BrokerHost string `json:"broker_host"`
-	BrokerPort int    `json:"broker_port"`
-	Topics     struct {
+	Topics struct {
 		Publish struct {
 			Telemetry   string `json:"telemetry"`
 			Attributes  string `json:"attributes"`
