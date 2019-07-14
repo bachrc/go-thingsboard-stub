@@ -20,7 +20,7 @@ type Device struct {
 	temperatures []*workers.Temperature
 }
 
-func (w *Device) init(gap int, address string, port int, token string, switchesRef []*workers.Switch, temperaturesRef []*workers.Temperature) {
+func (w *Device) init(address string, port int, token string, switchesRef []*workers.Switch, temperaturesRef []*workers.Temperature) {
 	w.username = token
 	w.switches = switchesRef
 	w.temperatures = temperaturesRef
@@ -100,9 +100,9 @@ func (w *Device) checkStatusHandler(requestId string, payload []byte) {
 	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, payload)
 }
 
-func InitWorker(gap int, address string, port int, token string, switches []*workers.Switch, temperatures []*workers.Temperature) *Device {
+func InitWorker(address string, port int, token string, switches []*workers.Switch, temperatures []*workers.Temperature) *Device {
 	worker := new(Device)
-	worker.init(gap, address, port, token, switches, temperatures)
+	worker.init(address, port, token, switches, temperatures)
 
 	return worker
 }

@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-	var gap int
 	var address string
 	var port int
 	var token string
@@ -24,12 +23,6 @@ func main() {
 	app.Usage = "Stub for the eControls Supervisor run by Thingsboard"
 
 	app.Flags = []cli.Flag{
-		cli.IntFlag{
-			Name:        "gap, g",
-			Value:       5,
-			Usage:       "Seconds gap between sending two values",
-			Destination: &gap,
-		},
 		cli.StringFlag{
 			Name:        "address, a",
 			Usage:       "The address of the broker",
@@ -63,7 +56,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
-		industruino := startApplication(gap, address, port, token, switches, temperatures)
+		industruino := createDevice(address, port, token, switches, temperatures)
 		industruino.Work()
 
 		<-ch
@@ -77,11 +70,11 @@ func main() {
 	}
 }
 
-func startApplication(gap int, address string, port int, token string, switchesDefPath string, temperaturesDefPath string) *internal.Device {
+func createDevice(address string, port int, token string, switchesDefPath string, temperaturesDefPath string) *internal.Device {
 	switches, _ := utils.ParseSwitchesDefinition(switchesDefPath)
 	temperatures, _ := utils.ParseTemperaturesDefinition(temperaturesDefPath)
 
-	worker := internal.InitWorker(gap, address, port, token, switches, temperatures)
+	worker := internal.InitWorker(address, port, token, switches, temperatures)
 
 	return worker
 }
