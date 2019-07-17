@@ -6,20 +6,23 @@ import (
 	"github.com/bachrc/thingsboard-stub/internal/entities"
 	"github.com/eclipse/paho.mqtt.golang"
 	"log"
+	"strconv"
 	"time"
 )
 
 var config, _ = entities.GetConfig()
 
 type Switch struct {
-	Value          bool `json:"value"`
-	Client         *mqtt.Client
-	AttributeName  string `json:"attributeName"`
-	GetValueMethod string `json:"getValueMethod"`
-	SetValueMethod string `json:"setValueMethod"`
+	Value                bool `json:"value"`
+	Client               *mqtt.Client
+	AttributeName        string `json:"attributeName"`
+	GetValueMethod       string `json:"getValueMethod"`
+	SetValueMethod       string `json:"setValueMethod"`
+	getValueEventChannel *chan entities.RPCRequest
+	setValueEventChannel *chan entities.RPCRequest
 }
 
-func (s *Switch) answerGetValue(requestId string) {
+func (s *Switch) answerGetValue(request entities.RPCRequest) {
 	payload := make(map[string]bool)
 	payload[s.AttributeName] = s.Value
 
@@ -31,24 +34,27 @@ func (s *Switch) answerGetValue(requestId string) {
 	}
 
 	messageToSend, _ := json.Marshal(response)
-	client := *s.Client
-	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
+	(*s.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
 }
 
-func (s *Switch) answerSetValue(message []byte, requestId string) {
-	var receivedValue entities.SetSwitchValue
-	_ = json.Unmarshal(message, &receivedValue)
+func (s *Switch) answerSetValue(request entities.RPCRequest) {
+	newValue, err := strconv.ParseBool(request.Params)
 
-	s.Value = receivedValue.Params
-	response := entities.SetSwitchValue{
-		Method: "setValue",
-		Params: s.Value,
+	if err == nil {
+		s.Value = newValue
+		response := entities.SetSwitchValue{
+			Method: "setValue",
+			Params: newValue,
+		}
+
+		messageToSend, _ := json.Marshal(response)
+
+		client := *s.Client
+		client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
+	} else {
+		log.Fatalf("Invalid switch value given : %s", request.Params)
 	}
 
-	messageToSend, _ := json.Marshal(response)
-
-	client := *s.Client
-	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
 }
 
 func (s *Switch) sendValue() {
@@ -63,18 +69,22 @@ func (s *Switch) sendValue() {
 }
 
 func (s *Switch) Work() {
-	for range time.Tick(2 * time.Second) {
-		s.sendValue()
+	ticker := time.NewTicker(5 * time.Second)
+	for {
+		select {
+		case getValue := <-*s.getValueEventChannel:
+			s.answerGetValue(getValue)
+			break
+		case setValue := <-*s.setValueEventChannel:
+			s.answerSetValue(setValue)
+			break
+		case <-ticker.C:
+			s.sendValue()
+		}
 	}
 }
 
-func (s *Switch) HandleMessage(method string, requestId string, payload []byte) {
-	switch method {
-	case s.GetValueMethod:
-		s.answerGetValue(requestId)
-		break
-	case s.SetValueMethod:
-		s.answerSetValue(payload, requestId)
-		break
-	}
+func (s *Switch) SetupEventChannels(getValueEventChannel *chan entities.RPCRequest, setValueEventChannel *chan entities.RPCRequest) {
+	s.getValueEventChannel = getValueEventChannel
+	s.setValueEventChannel = setValueEventChannel
 }

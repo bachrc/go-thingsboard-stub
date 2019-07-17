@@ -16,6 +16,7 @@ var config, _ = entities.GetConfig()
 type Device struct {
 	username     string
 	client       *mqtt.Client
+	operations   map[string]*chan entities.RPCRequest
 	switches     []*workers.Switch
 	temperatures []*workers.Temperature
 }
@@ -30,10 +31,37 @@ func (w *Device) init(address string, port int, token string, switchesRef []*wor
 	client := mqtt.NewClient(opts)
 	w.client = &client
 
+	w.operations = make(map[string]*chan entities.RPCRequest)
+
 	for _, theSwitch := range switchesRef {
+		_, okGet := w.operations[theSwitch.GetValueMethod]
+		_, okSet := w.operations[theSwitch.SetValueMethod]
+
+		if !okGet || !okSet {
+			panic("Duplicate method names")
+		}
+
+		getValueEventChannel := make(chan entities.RPCRequest)
+		w.operations[theSwitch.GetValueMethod] = &getValueEventChannel
+		setValueEventChannel := make(chan entities.RPCRequest)
+		w.operations[theSwitch.SetValueMethod] = &setValueEventChannel
+
+		theSwitch.SetupEventChannels(&getValueEventChannel, &setValueEventChannel)
 		theSwitch.Client = &client
 	}
 	for _, theTemperature := range temperaturesRef {
+		_, okGet := w.operations[theTemperature.GetValueMethod]
+		_, okSet := w.operations[theTemperature.SetValueMethod]
+
+		if !okGet || !okSet {
+			panic("Duplicate method names")
+		}
+		getValueEventChannel := make(chan entities.RPCRequest)
+		setValueEventChannel := make(chan entities.RPCRequest)
+		w.operations[theTemperature.GetValueMethod] = &getValueEventChannel
+		w.operations[theTemperature.SetValueMethod] = &setValueEventChannel
+
+		theTemperature.SetupEventChannels(&getValueEventChannel, &setValueEventChannel)
 		theTemperature.Client = &client
 	}
 }
@@ -66,26 +94,15 @@ func (w *Device) onMessage(client mqtt.Client, msg mqtt.Message) {
 	log.Printf("Received message from topic : %s", msg.Topic())
 	log.Printf("The message is : \n%s", payload)
 
-	var received entities.Instruction
+	var received entities.RPCRequest
 	_ = json.Unmarshal(payload, &received)
 
-	requestId := w.getRequestId(msg.Topic())
+	received.RequestId = getRequestId(msg.Topic())
 
-	if received.Method == "checkStatus" {
-		w.checkStatusHandler(requestId, payload)
-	}
-
-	for _, theSwitch := range w.switches {
-		(*theSwitch).HandleMessage(received.Method, requestId, payload)
-	}
-
-	for _, theTemperature := range w.temperatures {
-		(*theTemperature).HandleMessage(received.Method, requestId, payload)
-	}
-
+	*w.operations[received.Method] <- received
 }
 
-func (w *Device) getRequestId(topic string) string {
+func getRequestId(topic string) string {
 	r := regexp.MustCompile(config.Topics.Regex.RPCRequests)
 	matches := r.FindStringSubmatch(topic)
 	if len(matches) != 2 {

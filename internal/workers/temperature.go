@@ -10,14 +10,16 @@ import (
 )
 
 type Temperature struct {
-	Value          string
-	Client         *mqtt.Client
-	AttributeName  string
-	GetValueMethod string
-	SetValueMethod string
+	Value                string
+	Client               *mqtt.Client
+	AttributeName        string
+	GetValueMethod       string
+	SetValueMethod       string
+	getValueEventChannel *chan entities.RPCRequest
+	setValueEventChannel *chan entities.RPCRequest
 }
 
-func (t *Temperature) answerGetValue(requestId string) {
+func (t *Temperature) answerGetValue(request entities.RPCRequest) {
 	payload := make(map[string]string)
 	payload[t.AttributeName] = t.Value
 
@@ -31,23 +33,20 @@ func (t *Temperature) answerGetValue(requestId string) {
 	messageToSend, _ := json.Marshal(response)
 
 	client := *t.Client
-	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
+	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
 }
 
-func (t *Temperature) answerSetValue(message []byte, requestId string) {
-	var receivedValue entities.SetTemperature
-	_ = json.Unmarshal(message, &receivedValue)
-
-	t.Value = receivedValue.Params
+func (t *Temperature) answerSetValue(request entities.RPCRequest) {
+	t.Value = request.Params
 	response := entities.SetTemperature{
-		Method: "setValue",
+		Method: t.SetValueMethod,
 		Params: t.Value,
 	}
 
 	messageToSend, _ := json.Marshal(response)
 
 	client := *t.Client
-	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, messageToSend)
+	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
 }
 
 func (t *Temperature) sendValue() {
@@ -63,18 +62,22 @@ func (t *Temperature) sendValue() {
 }
 
 func (t *Temperature) Work() {
-	for range time.Tick(20 * time.Second) {
-		t.sendValue()
+	ticker := time.NewTicker(7 * time.Second)
+	for {
+		select {
+		case getValue := <-*t.getValueEventChannel:
+			t.answerGetValue(getValue)
+			break
+		case setValue := <-*t.setValueEventChannel:
+			t.answerSetValue(setValue)
+			break
+		case <-ticker.C:
+			t.sendValue()
+		}
 	}
 }
 
-func (t *Temperature) HandleMessage(method string, requestId string, payload []byte) {
-	switch method {
-	case t.GetValueMethod:
-		t.answerGetValue(requestId)
-		break
-	case t.SetValueMethod:
-		t.answerSetValue(payload, requestId)
-		break
-	}
+func (t *Temperature) SetupEventChannels(getValueEventChannel *chan entities.RPCRequest, setValueEventChannel *chan entities.RPCRequest) {
+	t.getValueEventChannel = getValueEventChannel
+	t.setValueEventChannel = setValueEventChannel
 }
