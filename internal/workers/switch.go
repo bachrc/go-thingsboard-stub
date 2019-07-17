@@ -65,7 +65,11 @@ func (s *Switch) sendValue() {
 
 	messageToSend, _ := json.Marshal(payload)
 	client := *s.Client
-	client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
+	token := client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
+
+	if token.Wait() && token.Error() != nil {
+		panic(token.Error())
+	}
 }
 
 func (s *Switch) Work() {

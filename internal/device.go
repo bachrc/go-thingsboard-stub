@@ -25,8 +25,14 @@ func (w *Device) init(address string, port int, token string, switchesRef []*wor
 	w.username = token
 	w.switches = switchesRef
 	w.temperatures = temperaturesRef
-	opts := mqtt.NewClientOptions().AddBroker(fmt.Sprintf(mqttAddressTemplate, address, port)).SetUsername(token)
-	opts.OnConnect = w.onConnect
+	mqttBrokerAddress := fmt.Sprintf(mqttAddressTemplate, address, port)
+	log.Printf("The device is connecting to %s", mqttBrokerAddress)
+	opts := mqtt.NewClientOptions().
+		AddBroker(mqttBrokerAddress).
+		SetUsername(token).
+		SetAutoReconnect(true).
+		SetClientID("tb-stub")
+	opts.OnConnect = (*w).onConnect
 
 	client := mqtt.NewClient(opts)
 	w.client = &client
@@ -67,10 +73,9 @@ func (w *Device) init(address string, port int, token string, switchesRef []*wor
 }
 
 func (w *Device) Work() {
-	client := *w.client
-	defer client.Disconnect(1)
+	defer (*w.client).Disconnect(1)
 
-	client.Connect()
+	(*w.client).Connect()
 	log.Println("Running...")
 
 	for _, theSwitch := range w.switches {
@@ -84,12 +89,18 @@ func (w *Device) Work() {
 
 func (w *Device) onConnect(c mqtt.Client) {
 	log.Println("I did connected well !")
-	if token := c.Subscribe(config.Topics.Subscribe.RPCRequests, 2, w.onMessage); token.Wait() && token.Error() != nil {
+	rpcRequestsTopic := config.Topics.Subscribe.RPCRequests
+	if token := c.Subscribe(rpcRequestsTopic, 2, func(client mqtt.Client, message mqtt.Message) {
+		log.Println("je suis seul")
+	}); token.Wait() && token.Error() != nil {
 		panic(token.Error())
+	} else {
+		log.Printf("Successfully subscribed to topic %s", rpcRequestsTopic)
 	}
 }
 
 func (w *Device) onMessage(client mqtt.Client, msg mqtt.Message) {
+	fmt.Println("pitié")
 	payload := msg.Payload()
 	log.Printf("Received message from topic : %s", msg.Topic())
 	log.Printf("The message is : \n%s", payload)

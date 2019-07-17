@@ -56,9 +56,13 @@ func (t *Temperature) sendValue() {
 	log.Printf("Message sent : %+v", payload)
 
 	messageToSend, _ := json.Marshal(payload)
-
+	log.Printf("Sending this json : %s to this topic : %s", messageToSend, config.Topics.Publish.Telemetry)
 	client := *t.Client
-	client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
+	token := client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
+
+	if token.Wait() && token.Error() != nil {
+		panic(token.Error())
+	}
 }
 
 func (t *Temperature) Work() {
