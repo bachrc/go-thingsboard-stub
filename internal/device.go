@@ -37,7 +37,7 @@ func (w *Device) init(address string, port int, token string, switchesRef []*wor
 		_, okGet := w.operations[theSwitch.GetValueMethod]
 		_, okSet := w.operations[theSwitch.SetValueMethod]
 
-		if !okGet || !okSet {
+		if okGet || okSet {
 			panic("Duplicate method names")
 		}
 
@@ -53,7 +53,7 @@ func (w *Device) init(address string, port int, token string, switchesRef []*wor
 		_, okGet := w.operations[theTemperature.GetValueMethod]
 		_, okSet := w.operations[theTemperature.SetValueMethod]
 
-		if !okGet || !okSet {
+		if okGet || okSet {
 			panic("Duplicate method names")
 		}
 		getValueEventChannel := make(chan entities.RPCRequest)
