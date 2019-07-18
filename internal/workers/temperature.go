@@ -10,8 +10,8 @@ import (
 )
 
 type Temperature struct {
-	Value                string
 	Client               *mqtt.Client
+	Value                string
 	AttributeName        string
 	GetValueMethod       string
 	SetValueMethod       string

@@ -66,10 +66,10 @@ func main() {
 		}
 
 		industruino := createDevice(address, port, token, switches, temperatures)
+		defer industruino.Stop()
 		industruino.Work()
 
 		<-ch
-
 		return nil
 	}
 

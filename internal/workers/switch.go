@@ -13,8 +13,8 @@ import (
 var config, _ = entities.GetConfig()
 
 type Switch struct {
-	Value                bool `json:"value"`
 	Client               *mqtt.Client
+	Value                bool   `json:"value"`
 	AttributeName        string `json:"attributeName"`
 	GetValueMethod       string `json:"getValueMethod"`
 	SetValueMethod       string `json:"setValueMethod"`

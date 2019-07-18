@@ -15,7 +15,7 @@ var config, _ = entities.GetConfig()
 
 type Device struct {
 	username     string
-	client       *mqtt.Client
+	client       mqtt.Client
 	operations   map[string]*chan entities.RPCRequest
 	switches     []*workers.Switch
 	temperatures []*workers.Temperature
@@ -34,8 +34,7 @@ func (w *Device) init(address string, port int, token string, switchesRef []*wor
 		SetClientID("tb-stub")
 	opts.OnConnect = (*w).onConnect
 
-	client := mqtt.NewClient(opts)
-	w.client = &client
+	w.client = mqtt.NewClient(opts)
 
 	w.operations = make(map[string]*chan entities.RPCRequest)
 
@@ -53,7 +52,7 @@ func (w *Device) init(address string, port int, token string, switchesRef []*wor
 		w.operations[theSwitch.SetValueMethod] = &setValueEventChannel
 
 		theSwitch.SetupEventChannels(&getValueEventChannel, &setValueEventChannel)
-		theSwitch.Client = &client
+		theSwitch.Client = &w.client
 	}
 	for _, theTemperature := range temperaturesRef {
 		_, okGet := w.operations[theTemperature.GetValueMethod]
@@ -68,14 +67,12 @@ func (w *Device) init(address string, port int, token string, switchesRef []*wor
 		w.operations[theTemperature.SetValueMethod] = &setValueEventChannel
 
 		theTemperature.SetupEventChannels(&getValueEventChannel, &setValueEventChannel)
-		theTemperature.Client = &client
+		theTemperature.Client = &w.client
 	}
 }
 
 func (w *Device) Work() {
-	defer (*w.client).Disconnect(1)
-
-	(*w.client).Connect()
+	w.client.Connect()
 	log.Println("Running...")
 
 	for _, theSwitch := range w.switches {
@@ -124,8 +121,12 @@ func getRequestId(topic string) string {
 }
 
 func (w *Device) checkStatusHandler(requestId string, payload []byte) {
-	client := *w.client
-	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, payload)
+	w.client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, requestId), 2, false, payload)
+}
+
+func (w *Device) Stop() {
+	log.Println("Disconnecting the client...")
+	w.client.Disconnect(1)
 }
 
 func InitWorker(address string, port int, token string, switches []*workers.Switch, temperatures []*workers.Temperature) *Device {
