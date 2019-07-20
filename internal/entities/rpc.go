@@ -12,10 +12,10 @@ type RawRequest struct {
 
 type SetTemperatureRequest struct {
 	RPCRequest
-	Value string `json:"value"`
+	Params string `json:"params"`
 }
 
 type SetSwitchRequest struct {
 	RPCRequest
-	Value bool `json:"value"`
+	Params bool `json:"params"`
 }

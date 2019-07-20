@@ -23,16 +23,8 @@ func (t *Temperature) answerGetValue(request entities.RawRequest) {
 	payload := make(map[string]string)
 	payload[t.AttributeName] = t.Value
 
-	response := entities.GetTemperatureValue{
-		Method: t.GetValueMethod,
-		Params: entities.ParamsTemperature{
-			Value: t.Value,
-		},
-	}
-
-	messageToSend, _ := json.Marshal(response)
-
-	(*t.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
+	value := []byte(t.Value)
+	(*t.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 1, false, value)
 }
 
 func (t *Temperature) answerSetValue(request entities.RawRequest) {
@@ -44,9 +36,10 @@ func (t *Temperature) answerSetValue(request entities.RawRequest) {
 		return
 	}
 
-	t.Value = setValueRequest.Value
+	t.Value = setValueRequest.Params
 
-	(*t.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, request.Payload)
+	(*t.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 1, false, request.Payload)
+	t.sendValue()
 }
 
 func (t *Temperature) sendValue() {

@@ -31,6 +31,8 @@ func (w *Device) init(address string, port int, token string, switchesRef []*wor
 		AddBroker(mqttBrokerAddress).
 		SetUsername(token).
 		SetAutoReconnect(true).
+		SetPingTimeout(500).
+		SetWriteTimeout(500).
 		SetClientID("tb-stub")
 	opts.OnConnect = (*w).onConnect
 
@@ -106,7 +108,7 @@ func (w *Device) onMessage(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	received.RequestId = getRequestId(msg.Topic())
-	received.Payload = payload
+	received.Payload = msg.Payload()
 
 	w.notifyEvent(received)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/bachrc/thingsboard-stub/internal/entities"
 	"github.com/eclipse/paho.mqtt.golang"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -25,29 +26,24 @@ func (s *Switch) answerGetValue(request entities.RawRequest) {
 	payload := make(map[string]bool)
 	payload[s.AttributeName] = s.Value
 
-	response := entities.GetSwitchValue{
-		Method: s.GetValueMethod,
-		Params: entities.Params{
-			Value: s.Value,
-		},
-	}
-
-	messageToSend, _ := json.Marshal(response)
-	(*s.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
+	value := []byte(strconv.FormatBool(s.Value))
+	(*s.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 1, false, value)
 }
 
 func (s *Switch) answerSetValue(request entities.RawRequest) {
 	var setValueRequest entities.SetSwitchRequest
 	unmarshalError := json.Unmarshal(request.Payload, &setValueRequest)
 
+	log.Printf("The received request is %+v", setValueRequest)
 	if unmarshalError != nil {
 		log.Fatalf("Unparseable set temperature request : %b", request.Payload)
 	}
 
-	s.Value = setValueRequest.Value
-	log.Printf("[SWIT : %10s] Set value to %s", s.AttributeName, setValueRequest.Value)
+	s.Value = setValueRequest.Params
+	log.Printf("[SWIT : %10s] Set value to %s", s.AttributeName, setValueRequest.Params)
 
-	(*s.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, request.Payload)
+	(*s.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 1, false, request.Payload)
+	s.sendValue()
 }
 
 func (s *Switch) sendValue() {
