@@ -6,7 +6,6 @@ import (
 	"github.com/bachrc/thingsboard-stub/internal/entities"
 	"github.com/eclipse/paho.mqtt.golang"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -18,11 +17,11 @@ type Switch struct {
 	AttributeName        string `json:"attributeName"`
 	GetValueMethod       string `json:"getValueMethod"`
 	SetValueMethod       string `json:"setValueMethod"`
-	getValueEventChannel *chan entities.RPCRequest
-	setValueEventChannel *chan entities.RPCRequest
+	getValueEventChannel *chan entities.RawRequest
+	setValueEventChannel *chan entities.RawRequest
 }
 
-func (s *Switch) answerGetValue(request entities.RPCRequest) {
+func (s *Switch) answerGetValue(request entities.RawRequest) {
 	payload := make(map[string]bool)
 	payload[s.AttributeName] = s.Value
 
@@ -37,31 +36,24 @@ func (s *Switch) answerGetValue(request entities.RPCRequest) {
 	(*s.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
 }
 
-func (s *Switch) answerSetValue(request entities.RPCRequest) {
-	newValue, err := strconv.ParseBool(request.Params)
+func (s *Switch) answerSetValue(request entities.RawRequest) {
+	var setValueRequest entities.SetSwitchRequest
+	unmarshalError := json.Unmarshal(request.Payload, &setValueRequest)
 
-	if err == nil {
-		s.Value = newValue
-		response := entities.SetSwitchValue{
-			Method: "setValue",
-			Params: newValue,
-		}
-
-		messageToSend, _ := json.Marshal(response)
-
-		client := *s.Client
-		client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
-	} else {
-		log.Fatalf("Invalid switch value given : %s", request.Params)
+	if unmarshalError != nil {
+		log.Fatalf("Unparseable set temperature request : %b", request.Payload)
 	}
 
+	s.Value = setValueRequest.Value
+	log.Printf("[SWIT : %10s] Set value to %s", s.AttributeName, setValueRequest.Value)
+
+	(*s.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, request.Payload)
 }
 
 func (s *Switch) sendValue() {
 	payload := make(map[string]bool)
 
 	payload[s.AttributeName] = s.Value
-	log.Printf("Message sent : %+v", payload)
 
 	messageToSend, _ := json.Marshal(payload)
 	client := *s.Client
@@ -70,6 +62,8 @@ func (s *Switch) sendValue() {
 	if token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
+
+	log.Printf("[SWIT : %10s] Message sent : %s", s.AttributeName, messageToSend)
 }
 
 func (s *Switch) Work() {
@@ -88,7 +82,7 @@ func (s *Switch) Work() {
 	}
 }
 
-func (s *Switch) SetupEventChannels(getValueEventChannel *chan entities.RPCRequest, setValueEventChannel *chan entities.RPCRequest) {
+func (s *Switch) SetupEventChannels(getValueEventChannel *chan entities.RawRequest, setValueEventChannel *chan entities.RawRequest) {
 	s.getValueEventChannel = getValueEventChannel
 	s.setValueEventChannel = setValueEventChannel
 }

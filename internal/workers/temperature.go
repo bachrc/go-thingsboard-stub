@@ -15,11 +15,11 @@ type Temperature struct {
 	AttributeName        string
 	GetValueMethod       string
 	SetValueMethod       string
-	getValueEventChannel *chan entities.RPCRequest
-	setValueEventChannel *chan entities.RPCRequest
+	getValueEventChannel *chan entities.RawRequest
+	setValueEventChannel *chan entities.RawRequest
 }
 
-func (t *Temperature) answerGetValue(request entities.RPCRequest) {
+func (t *Temperature) answerGetValue(request entities.RawRequest) {
 	payload := make(map[string]string)
 	payload[t.AttributeName] = t.Value
 
@@ -32,37 +32,35 @@ func (t *Temperature) answerGetValue(request entities.RPCRequest) {
 
 	messageToSend, _ := json.Marshal(response)
 
-	client := *t.Client
-	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
+	(*t.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
 }
 
-func (t *Temperature) answerSetValue(request entities.RPCRequest) {
-	t.Value = request.Params
-	response := entities.SetTemperature{
-		Method: t.SetValueMethod,
-		Params: t.Value,
+func (t *Temperature) answerSetValue(request entities.RawRequest) {
+	var setValueRequest entities.SetTemperatureRequest
+	unmarshalError := json.Unmarshal(request.Payload, &setValueRequest)
+
+	if unmarshalError != nil {
+		log.Fatalf("Unparseable set temperature request : %b", request.Payload)
+		return
 	}
 
-	messageToSend, _ := json.Marshal(response)
+	t.Value = setValueRequest.Value
 
-	client := *t.Client
-	client.Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, messageToSend)
+	(*t.Client).Publish(fmt.Sprintf(config.Topics.Publish.RPCResponse, request.RequestId), 2, false, request.Payload)
 }
 
 func (t *Temperature) sendValue() {
 	payload := make(map[string]string)
 
 	payload[t.AttributeName] = t.Value
-	log.Printf("Message sent : %+v", payload)
 
 	messageToSend, _ := json.Marshal(payload)
-	log.Printf("Sending this json : %s to this topic : %s", messageToSend, config.Topics.Publish.Telemetry)
-	client := *t.Client
-	token := client.Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
+	token := (*t.Client).Publish(config.Topics.Publish.Telemetry, 2, false, messageToSend)
 
 	if token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
+	log.Printf("[TEMP : %10s] Message sent : %s", t.AttributeName, messageToSend)
 }
 
 func (t *Temperature) Work() {
@@ -81,7 +79,7 @@ func (t *Temperature) Work() {
 	}
 }
 
-func (t *Temperature) SetupEventChannels(getValueEventChannel *chan entities.RPCRequest, setValueEventChannel *chan entities.RPCRequest) {
+func (t *Temperature) SetupEventChannels(getValueEventChannel *chan entities.RawRequest, setValueEventChannel *chan entities.RawRequest) {
 	t.getValueEventChannel = getValueEventChannel
 	t.setValueEventChannel = setValueEventChannel
 }
