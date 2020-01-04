@@ -1,3 +1,9 @@
+# Important note
+
+This repository contains some experiments I had with Golang and its channels, MQTT and Thingsboard. It is really not production ready. 
+
+This made me aware of Golang's limits, and then switched to Rust, which is a well more mature, performant, and featured language.
+
 # Thingsboard-stub
 
 The name is quite self-explanatory : this program is meant to simulate a device (an arduino/industruino) interacting
